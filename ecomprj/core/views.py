@@ -70,8 +70,17 @@ def product_detail(request, pid):
 
     p_image = product.p_images.all()
 
+    make_review = True
+
+    if request.user.is_authenticated:
+        user_review_count = ProductReview.objects.filter(user = request.user, product=product).count()
+
+        if user_review_count > 0:
+            make_review = False
+
     context = {
         "product" : product,
+        "make_review" : make_review,
         "p_image" : p_image,
         "average_ratings" : average_ratings,
         "reviews" : reviews,
@@ -107,10 +116,8 @@ def ajax_add_review(request, pid):
 
     context = {
         "user" : user.username,
-        "review" : {
-            "review" : review.review,
-            "rating" : review.rating,
-        },
+        "review" : request.POST["review"],
+        "rating" : request.POST["rating"],
     }
 
     average_reviews = ProductReview.objects.filter(product=product).aggregate(rating = Avg("rating"))
