@@ -2,9 +2,15 @@ from .models import Product, Category, Vendor, CartOrder, CartOrderItems, WishLi
 
 def default(request):
     categories = Category.objects.all()
-    address = Address.objects.get(user=request.user)
+    vendors = Vendor.objects.all()
+
+    try:
+        address = Address.objects.get(user=request.user)
+    except Address.DoesNotExist:
+        address = None
 
     return {
         "categories" : categories,
         "address" : address,
+        "vendors" : vendors,
     }

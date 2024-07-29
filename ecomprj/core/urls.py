@@ -22,4 +22,10 @@ urlpatterns = [
 
     #Review
     path("ajax-add-review/<int:pid>/", views.ajax_add_review, name="ajax-add-review"),
+
+    # SEARCH
+    path("search/", views.search_view, name="search"),
+
+    # Filter
+    path("filter-products/", views.filter_products, name="filter-products")
     ]
