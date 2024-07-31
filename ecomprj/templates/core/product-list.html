@@ -1,6 +1,39 @@
 {% extends "partials/base.html" %}
 {% load static %}
 {% block content %}
+
+    <head>
+        <style>
+            input[type="range"] {
+                -webkit-appearance: none;
+                margin-right: 15px;
+                height: 7px;
+                background: rgba(255, 255, 255, 0.6);
+                border-radius: 5px;
+                background-image: linear-gradient(#3bb77e, #3bb77e);
+                background-size: 100% 100%;
+                background-repeat: no-repeat;
+            }
+            
+            input[type="range"]::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                height: 20px;
+                width: 20px;
+                border-radius: 50%;
+                background: #3bb77e;
+                cursor: ew-resize;
+                box-shadow: 0 0 2px 0 #555;
+                transition: background .3s ease-in-out;
+            }
+            
+            input[type=range]::-webkit-slider-runnable-track {
+                -webkit-appearance: none;
+                box-shadow: none;
+                border: none;
+                background: transparent;
+            }
+            </style>            
+    </head>
     <main class="main">
         <div class="page-header breadcrumb-wrap">
             <div class="container">
@@ -106,28 +139,18 @@
                                     <div class="sidebar-widget price_range range">
                                         <div class="price-filter mb-20">
                                             <div class="price-filter-inner">
-                                                <div id="slider-range" class="mb-20"></div>
+                                                {% comment %} <div id="slider-range" class="mb-20"></div> {% endcomment %}
+                                                <input type="range" name="range" id="range" min="{{min_max_price.price__min}}" max="{{min_max_price.price__max}}" value="{{min_max_price.price__min|floatformat:2}}" oninput="max_price.value=this.value" />
                                                 <div class="d-flex justify-content-between">
-                                                    <div class="caption">From: <strong id="slider-range-value1" class="text-brand"></strong></div>
-                                                    <div class="caption">To: <strong id="slider-range-value2" class="text-brand"></strong></div>
+                                                    <div class="caption">From: <strong id="slider-range-value1" class="text-brand">${{min_max_price.price__min|floatformat:2}}</strong></div>
+                                                    <div class="caption">To: <strong id="slider-range-value2" class="text-brand">${{min_max_price.price__max|floatformat:2}}</strong></div>
                                                 </div>
+                                                <input type="number" id="max_price" min="{{min_max_price.price__min}}" max="{{min_max_price.price__max}}" value="{{min_max_price.price__min|floatformat:2}}" placeholder="Current Price" name="max_price" onkeyup="range.value=this.value" />
                                             </div>
+                                            {% comment %} {{min_max_price}} {% endcomment %}
                                         </div>
                                         <div class="custome-checkbox">
-                                            <input class="form-check-input" type="checkbox" name="checkbox" id="exampleCheckbox211" value="" />
-                                            <label class="form-check-label" for="exampleCheckbox211"><span>$0.00 - $20.00 </span></label>
-                                            <br />
-                                            <input class="form-check-input" type="checkbox" name="checkbox" id="exampleCheckbox22" value="" />
-                                            <label class="form-check-label" for="exampleCheckbox22"><span>$20.00 - $40.00 </span></label>
-                                            <br />
-                                            <input class="form-check-input" type="checkbox" name="checkbox" id="exampleCheckbox23" value="" />
-                                            <label class="form-check-label" for="exampleCheckbox23"><span>$40.00 - $60.00 </span></label>
-                                            <br />
-                                            <input class="form-check-input" type="checkbox" name="checkbox" id="exampleCheckbox24" value="" />
-                                            <label class="form-check-label" for="exampleCheckbox24"><span>$60.00 - $80.00 </span></label>
-                                            <br />
-                                            <input class="form-check-input" type="checkbox" name="checkbox" id="exampleCheckbox25" value="" />
-                                            <label class="form-check-label" for="exampleCheckbox25"><span>Over $100.00</span></label>
+                                            <button class="btn mt-20 w-100" id="price-filter-btn" type="button">Filter By Price</button>
                                         </div>
                                     </div>
                                 </div>
@@ -217,11 +240,16 @@
                                     </div>
                                     <div class="product-card-bottom">
                                         <div class="product-price">
-                                            <span>${{p.price}}</span>
+                                            <span>$</span> <span class="current-product-price-{{p.id}}">{{p.price}}</span>
                                             <span class="old-price">${{p.old_price}}</span>
                                         </div>
                                         <div class="add-cart">
-                                            <a class="add" href="shop-cart.html"><i class="fi-rs-shopping-cart mr-5"></i>Add </a>
+                                            <input type="hidden" value="1" name="" id="product-quantity" class="w-25 mb-20 product-quantity-{{p.id}}">
+                                            <input type="hidden" name="" id="" class="product-pid-{{p.id}}" value="{{p.pid}}">
+                                            <input type="hidden" name="" id="" class="product-image-{{p.id}}" value="{{p.image.url}}">
+                                            <input type="hidden" class="product-id-{{p.id}}" value="{{ p.id }}" name="" id="">
+                                            <input type="hidden" class="product-title-{{p.id}}" value="{{p.title }}" name="" id="">
+                                            <button class="add add-to-cart-btn b-none" data-index="{{ p.id }}"><i class="fi-rs-shopping-cart mr-5" id="add-to-cart-btn"></i>Add </button>
                                         </div>
                                     </div>
                                 </div>

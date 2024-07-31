@@ -1,5 +1,3 @@
-console.log("Working Fine");
-
 const months_list = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 $("#commentForm").submit(function(e) {
@@ -90,10 +88,16 @@ $("#commentForm").submit(function(e) {
 // })
 
 $(document).ready(function(){
-    $(".filter-checkbox").on("click", function(){
+    $(".filter-checkbox, #price-filter-btn").on("click", function(){
         console.log("A check box has been clicked!");
 
         let filter_object = {}
+
+        min_price = $("#max_price").attr("min")
+        max_price = $("#max_price").val()
+
+        filter_object.min_price = min_price;
+        filter_object.max_price = max_price;
 
         $(".filter-checkbox:checked").each(function(){
             let filter_value = $(this).val()
@@ -125,5 +129,160 @@ $(document).ready(function(){
                 console.log("Done!");
             }
         })
+    })
+
+    $("#max_price").on("blur", function(){
+        let min = $(this).attr("min")
+        let max = $(this).attr("max")
+        let cp = $(this).val()
+
+        // console.log("Min value:", min);
+        // console.log("Max value:", max);
+        // console.log("Current value:", cp);
+
+        if(cp < parseInt(min) || cp > parseInt(max)){
+            // console.log("Error Occuredd!");
+
+            min = Math.round(min * 100) / 100
+            max = Math.round(max * 100) / 100
+
+            // console.log("Min:", min);
+            // console.log("Max:", max);
+
+            alert("The Price Must be from $"+min +" and $"+ max)
+
+            $(this).val(min)
+            $("#range").val(min)
+
+            $(this).focus()
+
+            return false
+        }
+    })
+
+    $(".add-to-cart-btn").on("click", function(){
+
+        let this_val = $(this)
+        let index = this_val.attr("data-index")
+    
+        let quantity = $(".product-quantity-" + index).val()
+        let title = $(".product-title-" + index).val()
+        let id = $(".product-id-" + index).val()
+        let pid = $(".product-pid-" + index).val()
+        let image = $(".product-image-" + index).val()
+        let price = $(".current-product-price-" + index).text()
+        
+    
+        console.log("Quantity", quantity);
+        console.log("Title", title);
+        console.log("id", id);
+        console.log("Price", price);
+        console.log("this is", this_val);
+        console.log("PID", pid);
+        console.log("Index", index);
+        console.log("Image", image);
+    
+        $.ajax({
+            url: "/add-to-cart",
+            data : {
+                'id' : id,
+                'pid' : pid,
+                'image' : image,
+                'title' : title,
+                'quantity' : quantity,
+                'price' : price,
+            },
+            dataType : "json",
+            beforeSend: function(){
+                console.log("Adding product to Cart!!!");
+            },
+            success: function(res){
+                this_val.html("✔")
+                console.log("Product Added Successfully!!");
+                $(".cart-items-count").text(res.totalCartItems)
+            }
+        })
+    })
+
+    $(".delete-product").on("click", function() {
+        let product_id = $(this).attr("data-product");
+        let this_val = $(this);
+    
+        console.log("Product_id", product_id);
+    
+        $.ajax({
+            url: "/delete-from-cart",
+            data: {
+                "id": product_id,
+            },
+            beforeSend: function() {
+                this_val.hide();
+            },
+            success: function(response) {
+                this_val.show();
+                $(".cart-items-count").text(response.totalCartItems);
+                $("#cart-list").html(response.data);
+            }
+        });
+    });    
+
+    $(".update-product").on("click", function() {
+        let product_id = $(this).attr("data-product");
+        let this_val = $(this);
+        let product_quantity = $(".update-product-"+product_id).val();
+    
+        console.log("Product_id", product_id);
+        console.log("Product_QTY", product_quantity);
+    
+        $.ajax({
+            url: "/update-cart",
+            data: {
+                "id": product_id,
+                "product_quantity": product_quantity,
+            },
+            beforeSend: function() {
+                this_val.hide();
+            },
+            success: function(response) {
+                this_val.show();
+                $(".cart-items-count").text(response.totalCartItems);
+                $("#cart-list").html(response.data);
+            }
+        });
     });
 });
+
+// Add to Cart Functionality for product-detail page
+// $(".add-to-cart-btn").on("click", function(){
+//     let quantity = $("#product-quantity").val()
+//     let title = $(".product-title").val()
+//     let id = $(".product-id").val()
+//     let price = $(".current-product-price").text()
+//     let this_val = $(this)
+
+//     console.log("Quantity", quantity);
+//     console.log("Title", title);
+//     console.log("id", id);
+//     console.log("Price", price);
+//     console.log("this is", this_val);
+
+//     $.ajax({
+//         url: "/add-to-cart",
+//         data : {
+//             'id' : id,
+//             'title' : title,
+//             'quantity' : quantity,
+//             'price' : price,
+//         },
+//         dataType : "json",
+//         beforeSend: function(){
+//             console.log("Adding product to Cart!!!");
+//         },
+//         success: function(res){
+//             this_val.html("Added to Cart!!")
+//             console.log("Product Added Successfully!!");
+//             $(".cart-items-count").text(res.totalCartItems)
+//         }
+//     })
+// })
+

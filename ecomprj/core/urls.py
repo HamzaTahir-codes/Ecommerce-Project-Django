@@ -27,5 +27,14 @@ urlpatterns = [
     path("search/", views.search_view, name="search"),
 
     # Filter
-    path("filter-products/", views.filter_products, name="filter-products")
+    path("filter-products/", views.filter_products, name="filter-products"),
+
+    #Add to Cart
+    path("add-to-cart/", views.add_to_cart, name="add-to-cart"),
+    #Cart List
+    path("cart/", views.cart_view, name="cart"),
+    #Delete from Cart
+    path("delete-from-cart/", views.delete_from_cart_view, name="delete-from-cart"),
+    #Update cart view
+    path("update-cart/", views.update_cart_view, name="update-cart"),
     ]
