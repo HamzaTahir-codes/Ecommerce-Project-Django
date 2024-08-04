@@ -6,7 +6,7 @@ from taggit.managers import TaggableManager
 from ckeditor_uploader.fields import RichTextUploadingField
 
 STATUS_CHOICE = (
-    ("process", "Processing"),
+    ("processing", "Processing"),
     ("shipped", "Shipped"),
     ("delivered", "Delivered"),
 )
@@ -140,7 +140,7 @@ class CartOrder(models.Model):
     price = models.DecimalField(max_digits=999999999, decimal_places=2, default="1.99")
     paid_status = models.BooleanField(default=False)
     order_date = models.DateTimeField(auto_now_add=True)
-    product_status = models.CharField(STATUS_CHOICE, max_length=50, default="processing")
+    product_status = models.CharField(choices = STATUS_CHOICE, max_length=50, default="processing")
 
     class Meta:
         verbose_name_plural = "Cart Order"
@@ -157,6 +157,9 @@ class CartOrderItems(models.Model):
 
     class Meta:
         verbose_name_plural = "Cart Order Items"
+
+    def cart_order_image(self):
+        return mark_safe("<img src='%s' width='50' height='50' />" % self.image.url)
     
     def product_image(self):
         return mark_safe("<img src='/media/%s' width='50' height='50' />" % self.image)
@@ -195,6 +198,9 @@ class WishList(models.Model):
 class Address(models.Model):
     user = models.ForeignKey(User, on_delete = models.SET_NULL, null=True) 
     address = models.CharField(max_length=100, null=True)
+    phone = models.CharField(max_length=1024, default="+123 456 789")
+    state = models.CharField(max_length=100, default="NYC")
+    city = models.CharField(max_length=100, default="City")
     status = models.BooleanField(default=False)
 
     class Meta:

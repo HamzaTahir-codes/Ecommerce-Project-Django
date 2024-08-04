@@ -88,49 +88,49 @@ $("#commentForm").submit(function(e) {
 // })
 
 $(document).ready(function(){
-    $(".filter-checkbox, #price-filter-btn").on("click", function(){
+    $(".filter-checkbox, #price-filter-btn").on("click", function() {
         console.log("A check box has been clicked!");
-
-        let filter_object = {}
-
-        min_price = $("#max_price").attr("min")
-        max_price = $("#max_price").val()
-
+    
+        let filter_object = {};
+    
+        let min_price = $("#min_price").val();
+        let max_price = $("#max_price").val();
+    
         filter_object.min_price = min_price;
         filter_object.max_price = max_price;
-
-        $(".filter-checkbox:checked").each(function(){
-            let filter_value = $(this).val()
-            let filter_key = $(this).data("filter")
-
+    
+        $(".filter-checkbox:checked").each(function() {
+            let filter_value = $(this).val();
+            let filter_key = $(this).data("filter");
+    
             console.log("Filter value is:", filter_value);
             console.log("Filter key is:", filter_key);
-
-            if(!filter_object[filter_key]) {
+    
+            if (!filter_object[filter_key]) {
                 filter_object[filter_key] = [];
             }
-
+    
             filter_object[filter_key].push(filter_value);
         });
-
+    
         console.log("Filter objects are:", filter_object);
-
+    
         $.ajax({
-            url : "/filter-products",
-            data : filter_object,
+            url: "/filter-products",
+            data: filter_object,
             dataType: "json",
-            beforeSend : function(){
-                console.log("Trying to Filter Products......");
+            beforeSend: function() {
+                console.log("Trying to Filter Products...");
             },
-            success : function(response){
+            success: function(response) {
                 console.log(response);
                 console.log("Data Filtered Successfully!");
-                $("#filtered-products").html(response.data)
+                $("#filtered-products").html(response.data);
                 console.log("Done!");
             }
-        })
-    })
-
+        });
+    });
+    
     $("#max_price").on("blur", function(){
         let min = $(this).attr("min")
         let max = $(this).attr("max")

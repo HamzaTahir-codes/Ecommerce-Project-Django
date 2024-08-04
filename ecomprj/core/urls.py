@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
 
 app_name = 'core'
@@ -37,4 +37,21 @@ urlpatterns = [
     path("delete-from-cart/", views.delete_from_cart_view, name="delete-from-cart"),
     #Update cart view
     path("update-cart/", views.update_cart_view, name="update-cart"),
+
+    #CheckOut!
+    path("checkout/", views.checkout_view, name="checkout"),
+
+    #Paypal
+    path("paypal/", include('paypal.standard.ipn.urls'), name="paypal-ipn"),
+    path("payment-successfull/", views.payment_successfull, name="payment-successfull"),
+    path("payment-failed/", views.payment_failed, name="payment-failed"),
+
+    #Dashboard
+    path("dashboard/", views.customer_dashboard, name="dashboard"),
+
+    #order detail
+    path("dashboard/order/<int:id>/", views.order_products, name="order-detail"),
+
+    #Make Default
+    path("make-default-address/", views.make_default_address, name="make-default-address"),
     ]

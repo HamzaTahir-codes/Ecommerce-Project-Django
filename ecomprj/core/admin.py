@@ -16,6 +16,7 @@ class VendorAdmin(admin.ModelAdmin):
     list_display = ["title", "vendor_image"]
 
 class CartOrderAdmin(admin.ModelAdmin):
+    list_editable = ["paid_status", "product_status"]
     list_display = ["user", "price", "paid_status", "order_date", "product_status"]
 
 class CartOrderItemsAdmin(admin.ModelAdmin):
@@ -28,7 +29,8 @@ class WishListAdmin(admin.ModelAdmin):
     list_display = ["user", "product"]
 
 class AddressAdmin(admin.ModelAdmin):
-    list_display = ["user", "address", "status"]
+    list_editable = ["address", "status"]
+    list_display = ["user", "address", "status", "phone", "city", "state"]
 
 admin.site.register(Product, ProductAdmin)
 admin.site.register(Category, CategoryAdmin)

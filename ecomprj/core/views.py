@@ -6,6 +6,11 @@ from .forms import ProductReviewForm
 from django.http import JsonResponse
 from django.template.loader import render_to_string
 from django.contrib import messages
+from django.urls import reverse
+from django.conf import settings
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
+from paypal.standard.forms import PayPalPaymentsForm
 
 def index(request):
     # product = Product.objects.all().order_by("-id")
@@ -148,23 +153,35 @@ def filter_products(request):
     categories = request.GET.getlist("category[]")
     vendors = request.GET.getlist("vendor[]")
 
-    min_price = request.GET["min_price"]
-    max_price = request.GET["max_price"]
+    try:
+        min_price = float(request.GET.get("min_price", 0))
+        max_price = float(request.GET.get("max_price", 999999))
+    except ValueError:
+        min_price = 0
+        max_price = 999999
 
-    products = Product.objects.filter(product_status = "published").order_by("-id").distinct()
+    # print(f"Received categories: {categories}")
+    # print(f"Received vendors: {vendors}")
+    # print(f"Received min_price: {min_price}")
+    # print(f"Received max_price: {max_price}")
 
-    products = products.filter(price__gte=min_price)
-    products = products.filter(price__lte=max_price)
+    products = Product.objects.filter(product_status="published").order_by("-id").distinct()
 
-    if len(categories) > 0:
-        products = products.filter(category__id__in = categories).distinct()
+    if min_price is not None and max_price is not None:
+        products = products.filter(price__gte=min_price, price__lte=max_price)
 
-    if len(vendors) > 0:
-        products= products.filter(vendor__id__in = vendors).distinct()
+    if categories:
+        products = products.filter(category__id__in=categories)
 
-    data = render_to_string("core/async/product-list.html",{"products": products})
+    if vendors:
+        products = products.filter(vendor__id__in=vendors)
+
+    print("Final QuerySet:", products.query)
+    data = render_to_string("core/async/product-list.html", {"products": products})
 
     return JsonResponse({"data": data})
+
+
 
 def add_to_cart(request):
     cart_product = {}
@@ -245,3 +262,114 @@ def update_cart_view(request):
     })
     
     return JsonResponse({"data": context, "totalCartItems": len(request.session['cart_data_obj'])})
+
+@login_required
+def checkout_view(request):
+    cart_total = 0
+    total_amount = 0
+    if 'cart_data_obj' in request.session:
+        #Getting total amount for paypal checkout
+        for p_id, item in request.session['cart_data_obj'].items():
+            total_amount += int(item['quantity']) * float(item['price'])
+        
+        #Getting Orders
+        order = CartOrder.objects.create(
+            user = request.user,
+            price = total_amount,
+        )
+
+        #Getting total amount for the Cart!
+        for p_id, item in request.session['cart_data_obj'].items():
+            cart_total += int(item['quantity']) * float(item['price'])
+
+            cart_order_products = CartOrderItems.objects.create(
+                order = order,
+                invoice_no = "Invoice-No-" + str(order.id),
+                item = item['title'],
+                image = item['image'],
+                qty = item['quantity'],
+                price = item['price'],
+                total = float(item['quantity']) * float(item['price']),
+            )
+
+
+    host = request.get_host()
+    paypal_dict = {
+        "business": settings.PAYPAL_RECEIVER_EMAIL,
+        'amount': cart_total,
+        'item_name': 'Order-Item_No-' + str(order.id),
+        'invoice': "INV-" + str(order.id),
+        "currency_code" : "USD",
+        'notify_url' : 'http://{}{}'.format(host, reverse('core:paypal-ipn')),
+        'return_url': 'http://{}{}'.format(host, reverse("core:payment-successfull")),
+        'cancel_return': 'http://{}{}'.format (host, reverse('core:payment-failed')),
+        }
+    #Form to render the paypal button
+    payment_button_form = PayPalPaymentsForm(initial=paypal_dict)
+
+    try:
+        active_address = Address.objects.get(user=request.user ,status=True)
+    except:
+        messages.warning(request,"Multiple Address can't be ACTIVE")
+        active_address = None
+
+    cart_total = 0
+    if 'cart_data_obj' in request.session:
+        for p_id, item in request.session['cart_data_obj'].items():
+            cart_total += int(item['quantity']) * float(item['price'])
+    return render(request, "core/checkout.html", {"cart_data": request.session['cart_data_obj'], "totalCartItems": len(request.session['cart_data_obj']), "cart_total" : cart_total, "payment_button_form" : payment_button_form, "active_address":active_address})
+    
+@login_required
+def payment_successfull(request):
+    cart_total = 0
+    if 'cart_data_obj' in request.session:
+        for p_id, item in request.session['cart_data_obj'].items():
+            cart_total += int(item['quantity']) * float(item['price'])
+        return render(request, "core/payment-completed.html", {"cart_data": request.session['cart_data_obj'], "totalCartItems": len(request.session['cart_data_obj']), "cart_total" : cart_total,})
+
+@login_required
+def payment_failed(request):
+    return render(request,"core/payment-failed.html")
+
+@login_required
+def customer_dashboard(request):
+    orders = CartOrder.objects.filter(user = request.user).order_by("-id")
+    address = Address.objects.filter(user=request.user)
+    if request.method == "POST":
+        address = request.POST["address"]
+        phone = request.POST["phone"]
+        state = request.POST["state"]
+        city = request.POST["city"]
+        
+        nAddress = Address.objects.create(
+            user=request.user,
+            address=address,
+            phone=phone,
+            state=state,
+            city=city,
+        )
+        
+        messages.success(request, "Address Saved")
+        return redirect("core:dashboard")
+
+
+    context = {
+        "orders" : orders,
+        "address" : address,
+    }
+    return render(request, "core/dashboard.html", context)
+
+@login_required
+def order_products(request, id):
+    order = CartOrder.objects.get(user = request.user, id=id)
+    order_items = CartOrderItems.objects.filter(order=order)
+    context = {
+        "order_items" : order_items,
+    }
+    return render(request, "core/order-detail.html", context)
+
+def make_default_address(request):
+    id = request.GET["id"]
+    Address.objects.update(status=False)
+    Address.objects.filter(id=id).update(status=True)
+    return JsonResponse({"boolean": True})

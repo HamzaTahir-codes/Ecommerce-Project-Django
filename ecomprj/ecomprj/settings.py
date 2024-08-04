@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     # Third Party Apps
     'taggit',
     'ckeditor',
+    'paypal.standard.ipn',
 
     # Configure  Apps
     'core.apps.CoreConfig',
@@ -158,6 +159,7 @@ AUTH_USER_MODEL = 'userauths.User'
 
 CKEDITOR_UPLOAD_PATH = "uploads/"
 
+LOGIN_URL = "userauths:login"
 
 CKEDITOR_CONFIGS = { 
     'default': {
@@ -173,3 +175,7 @@ CKEDITOR_CONFIGS = {
         )
     }
 }
+
+#PAYPAL
+PAYPAL_RECEIVER_EMAIL = "sb-c5xgx6555500@business.example.com"
+PAYPAL_TEST = True
