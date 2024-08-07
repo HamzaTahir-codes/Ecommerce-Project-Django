@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.http import HttpResponseRedirect
-from .models import User
-from .forms import UserRegisterForm
+from .models import User, Profile
+from .forms import UserRegisterForm, ProfileUpdateForm
 from django.contrib import messages
 from django.contrib.auth import login, authenticate ,logout
 
@@ -55,3 +55,21 @@ def logout_view(request):
     logout(request)
     messages.success(request,"Logged Out Successfully!")
     return redirect("userauths:login")
+
+def profile_update(request):
+    profile = Profile.objects.get(user=request.user)
+    if request.method == "POST":
+        form = ProfileUpdateForm(request.POST, request.FILES, instance=profile)
+        if form.is_valid:
+            user_p = form.save(commit=False)
+            user_p.user = request.user
+            user_p.save()
+            messages.success(request,"Profile Updated Successfully!")
+            return redirect("core:dashboard")
+    else:
+            form = ProfileUpdateForm(instance=profile)
+    context = {
+        "form" : form,
+        "profile" : profile,
+    }
+    return render(request,"userauths/profile-update.html", context)

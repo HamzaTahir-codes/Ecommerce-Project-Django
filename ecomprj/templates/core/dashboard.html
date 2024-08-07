@@ -19,7 +19,10 @@
                                 <div class="dashboard-menu">
                                     <ul class="nav flex-column" role="tablist">
                                         <li class="nav-item">
-                                            <a class="nav-link active" id="dashboard-tab" href="{% url "core:dashboard" %}"><i class="fi-rs-settings-sliders mr-10"></i>Dashboard</a>
+                                            <a class="nav-link active" id="profile-tab" data-bs-toggle="tab" href="#profile"><i class="fas fa-user mr-10"></i>Profile</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" id="dashboard-tab" data-bs-toggle="tab" href="#dashboard"><i class="fi-rs-settings-sliders mr-10"></i>Dashboard</a>
                                         </li>
                                         <li class="nav-item">
                                             <a class="nav-link" id="orders-tab" data-bs-toggle="tab" href="#orders" role="tab" aria-controls="orders" aria-selected="false"><i class="fi-rs-shopping-bag mr-10"></i>Orders</a>
@@ -41,16 +44,72 @@
                             </div>
                             <div class="col-md-9">
                                 <div class="tab-content account dashboard-content pl-50">
-                                    <div class="tab-pane fade active show" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
+                                    <div class="tab-pane fade active show" id="profile" role="tabpanel" aria-labelledby="profile-tab">
                                         <div class="card">
                                             <div class="card-header">
-                                                <h3 class="mb-0">Hello {{request.user|title}}!</h3>
+                                                <h3 class="mb-3 text-brand-2">PROFILE</h3>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="container mt-5">
+                                                    <div class="row justify-content-center">
+                                                        <div class="col-md-8">
+                                                            <div class="card shadow-lg">
+                                                                <div class="card-body text-center">
+                                                                    <div class="position-relative mb-3">
+                                                                        {% if user_profile.image %}
+                                                                        <img src="{{user_profile.image.url}}" class="rounded-circle mb-3 img-thumbnail" alt="Profile Image" width="150" height="150">
+                                                                        {% else %}
+                                                                        <img src="https://www.shutterstock.com/image-vector/blank-avatar-photo-place-holder-600nw-1095249842.jpg" class="rounded-circle mb-3 img-thumbnail" alt="Profile Image" width="150" height="150">
+                                                                        {% endif %}
+                                                                        <a href="{% url "userauths:profile-update" %}" class="btn btn-primary position-absolute" style="top: 10px; right: 10px;">
+                                                                            <i class="fas fa-edit"></i> Update Profile
+                                                                        </a>
+                                                                    </div>
+                                                                    <form>
+                                                                        <div class="form-group">
+                                                                            <label for="fullName" class="font-weight-bold">Full Name</label>
+                                                                            <input type="text" class="form-control" id="fullName" value="{{user_profile.full_name}}" placeholder="Full Name">
+                                                                        </div>
+                                                                        <div class="form-group">
+                                                                            <label for="bio" class="font-weight-bold">Bio</label>
+                                                                            <textarea class="form-control" id="bio" rows="3" placeholder="Your BIO">{{user_profile.bio}}</textarea>
+                                                                        </div>
+                                                                        <div class="form-group">
+                                                                            <label for="phone" class="font-weight-bold">Phone</label>
+                                                                            <input type="text" class="form-control" id="phone" value="{{user_profile.phone}}" placeholder="Phone No">
+                                                                        </div>
+                                                                        <div class="form-group">
+                                                                            <label for="verified" class="font-weight-bold">Verified Status</label>
+                                                                            <div>
+                                                                                {% if user_profile.verified %}
+                                                                                    <i class="fas fa-check-circle text-success"></i> Verified
+                                                                                {% else %}
+                                                                                    <i class="fas fa-times-circle text-danger"></i> Not Verified
+                                                                                {% endif %}
+                                                                            </div>
+                                                                        </div>
+                                                                    </form>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>                                               
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane fade active" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h3 class="mb-0">Hello Mr.{{request.user|title}}!</h3>
                                             </div>
                                             <div class="card-body">
                                                 <p>
                                                     From your account dashboard. you can easily check &amp; view your <a href="#">recent orders</a>,<br />
                                                     manage your <a href="#">shipping and billing addresses</a> and <a href="#">edit your password and account details.</a>
                                                 </p>
+                                            </div>
+                                            <div>
+                                                <canvas style="height:30px;" id="myChart"></canvas>
                                             </div>
                                         </div>
                                     </div>
@@ -73,7 +132,7 @@
                                                             </tr>
                                                         </thead>
                                                         <tbody>
-                                                            {% for o in orders %}
+                                                            {% for o in order_list %}
                                                             <tr>
                                                                 <td>Order-No-{{o.id}}</td>
                                                                 <td>{{o.order_date}}</td>
@@ -227,34 +286,28 @@
         </div>
     </main>
     <script>
-        $(document).on("click", ".make-default-address", function() {
-            console.log("Button clicked");
-            let id = $(this).attr("data-address-id");
-            let element = $(this);
-    
-            console.log("Id is:", id);
-            console.log("Element is:", element);
-
-            $.ajax({
-                url:"/make-default-address",
-                data:{
-                    "id" : id,
-                },
-                dataType: "json",
-                success:function(res){
-                    console.log("Address Made Default......");
-
-                    if(res.boolean == true){
-
-                        $(".check").hide()
-                        $(".action_btn").show()
-
-                        $(".check"+id).show()
-                        $(".button"+id).hide()
-                    }
-                }
-
-            })
+        const ctx = document.getElementById('myChart');
+        const labels = {{months|safe}}
+      
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: '# of Orders',
+              borderColor: '##228B22',
+              backgroundColor: '#9ACD32',
+              data: {{total_orders|safe}},
+              borderWidth: 1
+            }]
+          },
+          options: {
+            scales: {
+              y: {
+                beginAtZero: true
+              }
+            }
+          }
         });
-    </script>
+      </script>
 {% endblock content %}

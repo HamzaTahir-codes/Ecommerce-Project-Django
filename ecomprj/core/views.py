@@ -8,9 +8,16 @@ from django.template.loader import render_to_string
 from django.contrib import messages
 from django.urls import reverse
 from django.conf import settings
+from userauths.models import ContactUs
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from paypal.standard.forms import PayPalPaymentsForm
+from userauths.models import Profile
+from django.core import serializers
+import calendar
+from django.db.models.functions import ExtractMonth
+
+
 
 def index(request):
     # product = Product.objects.all().order_by("-id")
@@ -240,6 +247,7 @@ def delete_from_cart_view(request):
     
     return JsonResponse({"data": context, "totalCartItems": len(request.session['cart_data_obj'])})
 
+
 def update_cart_view(request):
     product_id = str(request.GET.get("id"))
     product_quantity = request.GET['product_quantity']
@@ -263,62 +271,81 @@ def update_cart_view(request):
     
     return JsonResponse({"data": context, "totalCartItems": len(request.session['cart_data_obj'])})
 
-@login_required
-def checkout_view(request):
+
+def save_checkout_info(request):
     cart_total = 0
     total_amount = 0
-    if 'cart_data_obj' in request.session:
+
+    if request.method == "POST":
+        full_name = request.POST.get("full_name")
+        email = request.POST.get("email")
+        phone = request.POST.get("phone")
+        address = request.POST.get("address")
+        city = request.POST.get("city")
+        state = request.POST.get("state")
+        country = request.POST.get("country")
+
+        request.session['full_name'] = full_name
+        request.session['email'] = email
+        request.session['phone'] = phone
+        request.session['address'] = address
+        request.session['city'] = city
+        request.session['country'] = country
+        request.session['state'] = state
+
+        if 'cart_data_obj' in request.session:
         #Getting total amount for paypal checkout
-        for p_id, item in request.session['cart_data_obj'].items():
-            total_amount += int(item['quantity']) * float(item['price'])
-        
-        #Getting Orders
-        order = CartOrder.objects.create(
-            user = request.user,
-            price = total_amount,
-        )
-
-        #Getting total amount for the Cart!
-        for p_id, item in request.session['cart_data_obj'].items():
-            cart_total += int(item['quantity']) * float(item['price'])
-
-            cart_order_products = CartOrderItems.objects.create(
-                order = order,
-                invoice_no = "Invoice-No-" + str(order.id),
-                item = item['title'],
-                image = item['image'],
-                qty = item['quantity'],
-                price = item['price'],
-                total = float(item['quantity']) * float(item['price']),
+            for p_id, item in request.session['cart_data_obj'].items():
+                total_amount += int(item['quantity']) * float(item['price'])
+            
+            #Getting Orders
+            order = CartOrder.objects.create(
+                user = request.user,
+                price = total_amount,
+                full_name = full_name,
+                email = email,
+                phone = phone,
+                address = address,
+                city = city,
+                state = state,
+                country = country,
             )
 
+            del request.session['full_name']
+            del request.session['email']
+            del request.session['phone']
+            del request.session['address']
+            del request.session['city']
+            del request.session['country']
+            del request.session['state']
 
-    host = request.get_host()
-    paypal_dict = {
-        "business": settings.PAYPAL_RECEIVER_EMAIL,
-        'amount': cart_total,
-        'item_name': 'Order-Item_No-' + str(order.id),
-        'invoice': "INV-" + str(order.id),
-        "currency_code" : "USD",
-        'notify_url' : 'http://{}{}'.format(host, reverse('core:paypal-ipn')),
-        'return_url': 'http://{}{}'.format(host, reverse("core:payment-successfull")),
-        'cancel_return': 'http://{}{}'.format (host, reverse('core:payment-failed')),
-        }
-    #Form to render the paypal button
-    payment_button_form = PayPalPaymentsForm(initial=paypal_dict)
+            #Getting total amount for the Cart!
+            for p_id, item in request.session['cart_data_obj'].items():
+                cart_total += int(item['quantity']) * float(item['price'])
 
-    try:
-        active_address = Address.objects.get(user=request.user ,status=True)
-    except:
-        messages.warning(request,"Multiple Address can't be ACTIVE")
-        active_address = None
+                cart_order_products = CartOrderItems.objects.create(
+                    order = order,
+                    invoice_no = "Invoice-No-" + str(order.id),
+                    item = item['title'],
+                    image = item['image'],
+                    qty = item['quantity'],
+                    price = item['price'],
+                    total = float(item['quantity']) * float(item['price']),
+                )
+        return redirect("core:checkout", order.oid)
+    return redirect("core:checkout", order.oid)  
+            
+def checkout_view(request, oid):
+    order = CartOrder.objects.get(oid=oid)
+    order_items = CartOrderItems.objects.filter(order=order)
 
-    cart_total = 0
-    if 'cart_data_obj' in request.session:
-        for p_id, item in request.session['cart_data_obj'].items():
-            cart_total += int(item['quantity']) * float(item['price'])
-    return render(request, "core/checkout.html", {"cart_data": request.session['cart_data_obj'], "totalCartItems": len(request.session['cart_data_obj']), "cart_total" : cart_total, "payment_button_form" : payment_button_form, "active_address":active_address})
-    
+    context = {
+        "order" : order,
+        "order_items" : order_items
+    }
+
+    return render(request, "core/checkout.html", context)
+
 @login_required
 def payment_successfull(request):
     cart_total = 0
@@ -333,8 +360,18 @@ def payment_failed(request):
 
 @login_required
 def customer_dashboard(request):
-    orders = CartOrder.objects.filter(user = request.user).order_by("-id")
+    order_list = CartOrder.objects.filter(user = request.user).order_by("-id")
     address = Address.objects.filter(user=request.user)
+
+    orders = CartOrder.objects.annotate(month=ExtractMonth("order_date")).values("month").annotate(count=Count("id")).values("month","count")
+
+    months = []
+    total_orders = []
+
+    for o in orders:
+        months.append(calendar.month_name[o['month']])
+        total_orders.append(o['count'])
+
     if request.method == "POST":
         address = request.POST["address"]
         phone = request.POST["phone"]
@@ -351,11 +388,18 @@ def customer_dashboard(request):
         
         messages.success(request, "Address Saved")
         return redirect("core:dashboard")
+    else:
+        print("Error")
 
+    user_profile = Profile.objects.get(user=request.user)
 
     context = {
-        "orders" : orders,
+        "order_list" : order_list,
         "address" : address,
+        "orders" : orders,
+        "total_orders" : total_orders,
+        "months" : months,
+        "user_profile" : user_profile,
     }
     return render(request, "core/dashboard.html", context)
 
@@ -373,3 +417,75 @@ def make_default_address(request):
     Address.objects.update(status=False)
     Address.objects.filter(id=id).update(status=True)
     return JsonResponse({"boolean": True})
+
+@login_required
+def wishlist_view(request):
+    wishlist = WishList.objects.all()
+    context = {
+        "wishlist" : wishlist,
+    }
+    return render(request, "core/wishlist.html", context)
+
+def add_to_wishlist(request):
+    product_id = request.GET['id']
+    product = Product.objects.get(id=product_id)
+
+    context = {}
+
+    wishlist_conter = WishList.objects.filter(product=product, user=request.user).count()
+    print(wishlist_conter)
+
+    if wishlist_conter > 0:
+        context = {
+            'bool' : True,
+        }
+    else:
+        new_wishlist = WishList.objects.create(
+            product = product,
+            user = request.user
+        )
+        context = {
+            'bool' : True
+        }
+
+    return JsonResponse(context)
+
+def remove_from_wishlist(request):
+    pid = request.GET['id']
+    wishlist = WishList.objects.filter(user=request.user)
+    wishlist_d = WishList.objects.get(id=pid)
+    n_wishlist = wishlist_d.delete()
+
+    context = {
+        'bool' : True,
+        'wishlist' : wishlist,
+    }
+
+    wishlist_json = serializers.serialize('json', wishlist)
+    data = render_to_string("core/async/wishlist-list.html",context)
+    return JsonResponse({"data":data, "wishlist": wishlist_json})
+
+def contact_us(request):
+    return render(request, "core/contact-us.html")
+
+def ajax_contact_us(request):
+    full_name = request.GET['full_name']
+    email = request.GET['email']
+    phone = request.GET['phone']
+    subject = request.GET['subject']
+    message = request.GET['message']
+
+    contact = ContactUs.objects.create(
+        full_name = full_name,
+        email = email,
+        phone = phone,
+        subject = subject,
+        message = message
+    )
+
+    data = {
+        "bool" : True,
+        "message" : "Sent Successfully!"
+    }
+
+    return JsonResponse({"data":data})

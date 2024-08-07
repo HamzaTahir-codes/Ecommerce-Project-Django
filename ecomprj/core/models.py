@@ -85,8 +85,8 @@ class Product(models.Model):
     image = models.ImageField(upload_to=user_directory_image, default="product.jpg")
     description = RichTextUploadingField(max_length=10000, default="This is the Vendor!")
 
-    price = models.DecimalField(max_digits=999999999, decimal_places=2, default="1.99")
-    old_price = models.DecimalField(max_digits=999999999, decimal_places=2, default="2.99")
+    price = models.DecimalField(max_digits=12, decimal_places=2, default="1.99")
+    old_price = models.DecimalField(max_digits=12, decimal_places=2, default="2.99")
 
     specifications = RichTextUploadingField(null=True, blank=True)
     type = models.CharField(max_length=100, default="Organic", null=True, blank=True) 
@@ -137,10 +137,32 @@ class ProductImages(models.Model):
 
 class CartOrder(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    price = models.DecimalField(max_digits=999999999, decimal_places=2, default="1.99")
+    full_name = models.CharField(max_length=100, null=True, blank=True)
+    email = models.CharField(max_length=100, null=True, blank=True)
+    phone = models.CharField(max_length=100, null=True, blank=True)
+
+    address = models.CharField(max_length=100, null=True, blank=True)
+    city = models.CharField(max_length=100, null=True, blank=True)
+    state = models.CharField(max_length=100, null=True, blank=True)
+    country = models.CharField(max_length=100, null=True, blank=True)
+
+
+    price = models.DecimalField(max_digits=12, decimal_places=2, default="0.00")
+    saved = models.DecimalField(max_digits=12, decimal_places=2, default="0.00")
+
+    shipping_method = models.CharField(max_length=100, null=True, blank=True)
+    tracking_id = models.CharField(max_length=100, null=True, blank=True)
+    tracking_website_address = models.CharField(max_length=100, null=True, blank=True)
+
+
     paid_status = models.BooleanField(default=False)
     order_date = models.DateTimeField(auto_now_add=True)
     product_status = models.CharField(choices = STATUS_CHOICE, max_length=50, default="processing")
+
+    stripe_payment_intent = models.CharField(max_length=100, null=True, blank=True)
+
+    sku = ShortUUIDField(null=True, blank=True, length =5, max_length=10, prefix="sku", alphabet="1234567890")
+    oid = ShortUUIDField(null=True, blank=True, length =5, max_length=10, alphabet="1234567890")
 
     class Meta:
         verbose_name_plural = "Cart Order"
@@ -152,8 +174,8 @@ class CartOrderItems(models.Model):
     item = models.CharField(max_length=200)
     image = models.CharField(max_length=200)
     qty = models.CharField(max_length = 100, default = 0)
-    price = models.DecimalField(max_digits=999999999, decimal_places=2, default="1.99")
-    total = models.DecimalField(max_digits=999999999, decimal_places=2, default="1.99")
+    price = models.DecimalField(max_digits=12, decimal_places=2, default="1.99")
+    total = models.DecimalField(max_digits=12, decimal_places=2, default="1.99")
 
     class Meta:
         verbose_name_plural = "Cart Order Items"

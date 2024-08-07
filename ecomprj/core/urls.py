@@ -39,7 +39,8 @@ urlpatterns = [
     path("update-cart/", views.update_cart_view, name="update-cart"),
 
     #CheckOut!
-    path("checkout/", views.checkout_view, name="checkout"),
+    path("checkout/<oid>/", views.checkout_view, name="checkout"),
+    
 
     #Paypal
     path("paypal/", include('paypal.standard.ipn.urls'), name="paypal-ipn"),
@@ -54,4 +55,20 @@ urlpatterns = [
 
     #Make Default
     path("make-default-address/", views.make_default_address, name="make-default-address"),
+
+    #Wishlist
+    path("wishlist/", views.wishlist_view, name="wishlist"),
+
+    #Add to wishlist
+    path("add-to-wishlist/", views.add_to_wishlist, name="add-to-wishlist"),
+
+    #Remove from wishlist
+    path("remove-from-wishlist/", views.remove_from_wishlist, name="remove-from-wishlist"),
+
+    #Contact US
+    path("contact-us/", views.contact_us, name="contact"),
+    path("ajax-contact-us", views.ajax_contact_us, name="ajax_contact_us"),
+
+    #new paths
+    path("save-checkout-info/", views.save_checkout_info, name="save-checkout-info"),
     ]
