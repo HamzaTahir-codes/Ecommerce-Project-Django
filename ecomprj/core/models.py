@@ -146,6 +146,7 @@ class CartOrder(models.Model):
     state = models.CharField(max_length=100, null=True, blank=True)
     country = models.CharField(max_length=100, null=True, blank=True)
 
+    coupon = models.ManyToManyField("core.Coupon", blank=True)
 
     price = models.DecimalField(max_digits=12, decimal_places=2, default="0.00")
     saved = models.DecimalField(max_digits=12, decimal_places=2, default="0.00")
@@ -227,3 +228,11 @@ class Address(models.Model):
 
     class Meta:
         verbose_name_plural = "Addresses"    
+
+class Coupon(models.Model):
+    code = models.CharField(max_length=10)
+    discount = models.IntegerField(default=1)
+    active = models.BooleanField(default=True)
+
+    def __str__(self) -> str:
+        return self.code

@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 import os
 from pathlib import Path
+from environs import Env
+env = Env()
+env.read_env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -176,6 +179,5 @@ CKEDITOR_CONFIGS = {
     }
 }
 
-#PAYPAL
-PAYPAL_RECEIVER_EMAIL = "sb-c5xgx6555500@business.example.com"
-PAYPAL_TEST = True
+STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY")
+STRIPE_PUBLIC_KEY = env("STRIPE_PUBLIC_KEY")

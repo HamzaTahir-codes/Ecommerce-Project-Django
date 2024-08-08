@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Product, Category, Vendor, CartOrder, CartOrderItems, WishList, ProductReview, Address, ProductImages
+from .models import Product, Coupon, Category, Vendor, CartOrder, CartOrderItems, WishList, ProductReview, Address, ProductImages
 from django.db.models import Count,Avg
 from taggit.models import Tag
 from .forms import ProductReviewForm
@@ -11,11 +11,11 @@ from django.conf import settings
 from userauths.models import ContactUs
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
-from paypal.standard.forms import PayPalPaymentsForm
 from userauths.models import Profile
 from django.core import serializers
 import calendar
 from django.db.models.functions import ExtractMonth
+import stripe
 
 
 
@@ -271,7 +271,7 @@ def update_cart_view(request):
     
     return JsonResponse({"data": context, "totalCartItems": len(request.session['cart_data_obj'])})
 
-
+@login_required
 def save_checkout_info(request):
     cart_total = 0
     total_amount = 0
@@ -334,25 +334,81 @@ def save_checkout_info(request):
                 )
         return redirect("core:checkout", order.oid)
     return redirect("core:checkout", order.oid)  
-            
+
+@login_required
 def checkout_view(request, oid):
     order = CartOrder.objects.get(oid=oid)
     order_items = CartOrderItems.objects.filter(order=order)
 
+    if request.method == "POST":
+        code = request.POST.get('code')
+        coupon = Coupon.objects.filter(code = code, active = True).first()
+        if coupon:
+            if coupon in order.coupon.all():
+                messages.warning(request, "Coupon already activated")
+                return redirect("core:checkout", order.oid)
+            else:
+
+                discount = order.price * coupon.discount / 100
+                order.coupon.add(coupon)
+                order.price -= discount
+                order.saved += discount
+                order.save()
+
+                messages.success(request,"Coupon Activated Successfully!")
+                return redirect("core:checkout", order.oid)
+        else:
+            messages.error(request, "Coupon Doesn't Exist")
+            return redirect("core:checkout", order.oid)
+
     context = {
         "order" : order,
-        "order_items" : order_items
+        "order_items" : order_items,
+        "stripe_publishable_key" : settings.STRIPE_PUBLIC_KEY,
     }
 
     return render(request, "core/checkout.html", context)
 
+@csrf_exempt
+def create_checkout_session(request, oid):
+    order = CartOrder.objects.get(oid=oid)
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+
+    checkout_session = stripe.checkout.Session.create(
+        customer_email= order.email,
+        payment_method_types= ['card'],
+        line_items=[{
+            'price_data':{
+                'currency' : 'USD',
+                'product_data' : {
+                    'name' : order.full_name,
+                },
+                'unit_amount' : int(order.price * 1000)
+            },
+            "quantity" : 1
+        }],
+        mode= 'payment',
+        success_url= request.build_absolute_uri(reverse("core:payment-successfull", args=[order.oid])) + "?session_id={CHECKOUT_SESSION_ID}",
+        cancel_url= request.build_absolute_uri(reverse("core:payment-failed"))
+    )
+    order.paid_status = False
+    order.stripe_payment_intent = checkout_session['id']
+    order.save()
+
+    return JsonResponse({"sessionId": checkout_session.id})
+
+
 @login_required
-def payment_successfull(request):
-    cart_total = 0
-    if 'cart_data_obj' in request.session:
-        for p_id, item in request.session['cart_data_obj'].items():
-            cart_total += int(item['quantity']) * float(item['price'])
-        return render(request, "core/payment-completed.html", {"cart_data": request.session['cart_data_obj'], "totalCartItems": len(request.session['cart_data_obj']), "cart_total" : cart_total,})
+def payment_successfull(request, oid):
+    order = CartOrder.objects.get(oid=oid)
+    if order.paid_status == False:
+        order.paid_status == True
+        order.save()
+
+    context = {
+        "order" : order
+    }
+    return render(request, "core/payment-completed.html", context)
 
 @login_required
 def payment_failed(request):
