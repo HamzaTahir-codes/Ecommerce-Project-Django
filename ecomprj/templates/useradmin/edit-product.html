@@ -1,0 +1,123 @@
+{% extends "useradmin/base.html" %}    
+    {% load static %}
+    {% load humanize %}
+        {% block content %}    
+            <section class="content-main">
+                <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                    <div class="row">
+                        <div class="col-9">
+                            <div class="content-header">
+                                <h2 class="content-title">Edit Product</h2>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h4>Basic</h4>
+                                </div>
+                                <div class="card-body">
+                                    {% if form.errors %}
+                                    <div class="alert alert-danger">
+                                        <h6>{{form.errors}}</h6>
+                                    </div>
+                                    {% endif %}
+                                    <div class="mb-4">
+                                        <label for="product_name" class="form-label">Product title</label>
+                                        {{form.title}}
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="form-label">Full description</label>
+                                        {{form.description}}
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-lg-4">
+                                            <div class="mb-4">
+                                                <label class="form-label">Regular price</label>
+                                                <div class="row gx-2">
+                                                    {{form.price}}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-4">
+                                            <div class="mb-4">
+                                                <label class="form-label">Promotional price</label>
+                                                {{form.old_price}}
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-4">
+                                            <label class="form-label">Specifications</label>
+                                            {{form.specifications}}
+                                        </div>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label for="product_name" class="form-label">Product Type</label>
+                                        {{form.type}}
+                                    </div>
+                                    <div class="mb-4">
+                                        <label for="product_name" class="form-label">Product Stock</label>
+                                        {{form.stock_count}}
+                                    </div>
+                                    <div class="mb-4">
+                                        <label for="product_name" class="form-label">Product Life</label>
+                                        {{form.life}}
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-lg-6">
+                                            <div class="mb-4">
+                                                <label class="form-label">Manufacturing Date</label>
+                                                <div class="row gx-2">
+                                                    {{form.mfd}}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-6">
+                                            <div class="mb-4">
+                                                <label class="form-label">Product Tags</label>
+                                                {{form.tags}}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <label class="mb-4">
+                                        <label class="form-label">Digital</label><br>
+                                        {{form.digital}}
+                                        <span class="form-check-label"> Check if only a digital product </span>
+                                    </label>
+                                </div>
+                            </div>
+                            <!-- card end// -->
+                        </div>
+                        <div class="col-lg-3">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h4>Media</h4>
+                                </div>
+                                <div class="card-body">
+                                    <div class="input-upload">
+                                        <img src="{{product.image.url}}" alt="" />
+                                        {{form.image}}
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- card end// -->
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h4>Organization</h4>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row gx-2">
+                                        <div class="col-sm-6 mb-3">
+                                            <label class="form-label">Category</label>
+                                                {{form.category}}
+                                        </div>
+                                    </div>
+                                    <!-- row.// -->
+                                </div>
+                            </div>
+                            <!-- card end// -->
+                            <button class="btn btn-md mt-3 rounded font-sm hover-up" type="submit">Edit Product</button>
+                        </div>
+                    </div>
+                </form>
+            </section>
+{% endblock %}

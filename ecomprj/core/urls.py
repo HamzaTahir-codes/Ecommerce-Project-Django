@@ -43,8 +43,8 @@ urlpatterns = [
 
     # #Paypal
     # path("paypal/", include('paypal.standard.ipn.urls'), name="paypal-ipn"),
-    # path("payment-successfull/<oid>/", views.payment_successfull, name="payment-successfull"),
-    # path("payment-failed/", views.payment_failed, name="payment-failed"),
+    path("payment-successfull/<oid>/", views.payment_successfull, name="payment-successfull"),
+    path("payment-failed/", views.payment_failed, name="payment-failed"),
 
     #Dashboard
     path("dashboard/", views.customer_dashboard, name="dashboard"),
