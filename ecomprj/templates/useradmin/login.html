@@ -1,0 +1,42 @@
+{% extends "useradmin/base.html" %}    
+    {% load static %}
+        {% block content %}
+            <section class="content-main mt-80 mb-80">
+                <div class="card mx-auto card-login">
+                    <div class="card-body">
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{message.tags}}">
+                                    <strong>{{ message }}</strong>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                        <h4 class="card-title mb-4">Sign in</h4>
+                        <form method="POST">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <input class="form-control" name="email" placeholder="Username or email" type="text" required />
+                            </div>
+                            <!-- form-group// -->
+                            <div class="mb-3">
+                                <input class="form-control" name="password" placeholder="Password" type="password" required />
+                            </div>
+                            <!-- form-group// -->
+                            <div class="mb-3">
+                                {% comment %} <a href="#" class="float-end font-sm text-muted">Forgot password?</a> {% endcomment %}
+                                <label class="form-check">
+                                    <input type="checkbox" class="form-check-input" checked="" />
+                                    <span class="form-check-label">Remember</span>
+                                </label>
+                            </div>
+                            <!-- form-group form-check .// -->
+                            <div class="mb-4">
+                                <button type="submit" class="btn btn-primary w-100">Login</button>
+                            </div>
+                            <!-- form-group// -->
+                        </form>
+                        <p class="text-center mb-4">Don't have account? <a href="#">Sign up</a></p>
+                    </div>
+                </div>
+            </section>
+        {% endblock content %}

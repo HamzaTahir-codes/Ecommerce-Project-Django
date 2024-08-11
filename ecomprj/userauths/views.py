@@ -4,9 +4,10 @@ from django.http import HttpResponseRedirect
 from .models import User, Profile
 from .forms import UserRegisterForm, ProfileUpdateForm
 from django.contrib import messages
+from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import login, authenticate ,logout
 
-
+@csrf_exempt
 def register_user(request):
     if request.method == "POST":
         form = UserRegisterForm(request.POST)
@@ -26,6 +27,7 @@ def register_user(request):
       }
     return render(request, "userauths/sign-up.html", context)
 
+@csrf_exempt
 def login_view(request):
     if request.user.is_authenticated:
         return redirect("core:index")

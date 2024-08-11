@@ -1,0 +1,91 @@
+{% extends "useradmin/base.html" %}    
+    {% load static %}
+        {% block content %}
+            <section class="content-main">
+                <div class="content-header">
+                    <h2 class="content-title">Profile setting</h2>
+                </div>
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{message.tags}}">
+                            <strong>{{ message }}</strong>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row gx-5">
+                            <div class="col-lg-12">
+                                <section class="content-body p-xl-4">
+                                    <form method="POST" enctype="multipart/form-data">
+                                        {% csrf_token %}
+                                        <div class="row">
+                                            <div class="col-lg-8">
+                                                <div class="row gx-3">
+                                                    <div class="col-6 mb-3">
+                                                        <label class="form-label">Full name</label>
+                                                        <input class="form-control" name="full_name" value={{request.user.profile.full_name}} type="text" placeholder="Your Complete Name" />
+                                                    </div>
+                                                    <!-- col .// -->
+                                                    <div class="col-6 mb-3">
+                                                        <label class="form-label">Bio</label>
+                                                        <input class="form-control" name="bio" value={{request.user.profile.bio}} type="text" placeholder="Your Bio!" />
+                                                    </div>
+                                                    <!-- col .// -->
+                                                    <div class="col-lg-6 mb-3">
+                                                        <label class="form-label">Phone</label>
+                                                        <input class="form-control" name="phone" value={{request.user.profile.phone}} type="number" placeholder="Phone Number" />
+                                                    </div>
+                                                    <!-- col .// -->
+                                                    <div class="col-lg-6 mb-3">
+                                                        <label class="form-label">Country</label>
+                                                        <input class="form-control" name="country" value={{request.user.profile.country}} type="text" placeholder="Country" />
+                                                    </div>
+                                                    <!-- col .// -->
+                                                    <div class="col-lg-12 mb-3">
+                                                        <label class="form-label">Address</label>
+                                                        <input class="form-control" type="text" name="address" value={{request.user.profile.address}} placeholder="Address" />
+                                                    </div>
+                                                </div>
+                                                <!-- row.// -->
+                                            </div>
+                                            <!-- col.// -->
+                                            <aside class="col-lg-4">
+                                                <figure class="text-lg-center">
+                                                    <img class="img-lg mb-3 img-avatar" src="{{request.user.profile.image.url}}" alt="User Photo" />
+                                                    <figcaption>
+                                                        <input type="file" name="image" id="" class="form-control-file" />
+                                                    </figcaption>
+                                                </figure>
+                                            </aside>
+                                            <!-- col.// -->
+                                        </div>
+                                        <!-- row.// -->
+                                        <br />
+                                        <button class="btn btn-primary" type="submit">Save changes</button>
+                                    </form>
+                                    <hr class="my-5" />
+                                    <div class="row" style="max-width: 920px">
+                                        <div class="col-md">
+                                            <article class="box mb-3 bg-light">
+                                                <a class="btn float-end btn-light btn-sm rounded font-md" href="{% url "useradmin:change-password" %}">Change</a>
+                                                <h6>Password</h6>
+                                                <small class="text-muted d-block" style="width: 70%">You can reset or change your password by clicking here</small>
+                                            </article>
+                                        </div>
+                                        <!-- col.// -->
+                                        <!-- col.// -->
+                                    </div>
+                                    <!-- row.// -->
+                                </section>
+                                <!-- content-body .// -->
+                            </div>
+                            <!-- col.// -->
+                        </div>
+                        <!-- row.// -->
+                    </div>
+                    <!-- card body end// -->
+                </div>
+                <!-- card end// -->
+            </section>
+        {% endblock content%}

@@ -158,7 +158,7 @@ class CartOrder(models.Model):
 
     paid_status = models.BooleanField(default=False)
     order_date = models.DateTimeField(auto_now_add=True)
-    product_status = models.CharField(choices = STATUS_CHOICE, max_length=50, default="processing")
+    product_status = models.CharField(choices = STATUS_CHOICE, max_length=50, default="processing", null=True, blank=True)
 
     stripe_payment_intent = models.CharField(max_length=100, null=True, blank=True)
 
