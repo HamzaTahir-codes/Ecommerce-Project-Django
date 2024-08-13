@@ -3,7 +3,7 @@ from django.contrib.auth.forms import UserCreationForm
 from .models import User, Profile
 
 class UserRegisterForm(UserCreationForm):
-    username = forms.CharField(widget=forms.TextInput(attrs={"placeholder": "Username"}))
+    username = forms.CharField(widget=forms.TextInput(attrs={"placeholder": "Enter your UserName", "class" : "form-group"}))
     email = forms.EmailField(widget=forms.EmailInput(attrs={"placeholder": "Email"}))
     bio = forms.CharField(widget=forms.TextInput(attrs={"placeholder": "Your Bio Here!"}))
     password1 = forms.CharField(widget=forms.PasswordInput(attrs={"placeholder": "Enter Your Password!"}))

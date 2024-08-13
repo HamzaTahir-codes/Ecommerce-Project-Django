@@ -6,6 +6,7 @@ class User(AbstractUser):
     email = models.EmailField(unique=True)
     username = models.CharField(max_length=50)
     bio = models.CharField(max_length=100)
+    is_email_verified = models.BooleanField(default=False)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ['username']
@@ -15,7 +16,7 @@ class User(AbstractUser):
     
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    image = models.ImageField(upload_to="image", null=True, blank=True)
+    image = models.ImageField(upload_to="image", default="userimage.jpg")
     full_name = models.CharField(max_length=100, null=True, blank=True)
     bio = models.CharField(max_length=500, null=True, blank=True)
     phone = models.CharField(max_length=30, null=True, blank=True)

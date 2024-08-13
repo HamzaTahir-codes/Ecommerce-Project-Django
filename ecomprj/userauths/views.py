@@ -1,11 +1,20 @@
 from django.shortcuts import render, redirect
 from django.urls import reverse
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseForbidden, HttpResponseRedirect, HttpResponse, HttpResponseBadRequest
 from .models import User, Profile
 from .forms import UserRegisterForm, ProfileUpdateForm
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import login, authenticate ,logout
+from django.contrib.auth.hashers import check_password
+from django.contrib.auth.decorators import login_required
+from .email import send_email_verification
+from django.contrib.auth import get_user_model
+from .utils import EmailVerificationTokenGenerator
+from django.utils.http import urlsafe_base64_decode
+from django.utils.encoding import force_str
+
+User = get_user_model()
 
 @csrf_exempt
 def register_user(request):
@@ -75,3 +84,53 @@ def profile_update(request):
         "profile" : profile,
     }
     return render(request,"userauths/profile-update.html", context)
+
+@login_required
+def change_password(request):
+    user = request.user
+
+    if request.method == "POST":
+        old_password = request.POST.get("old_password")
+        new_password = request.POST.get("new_password")
+        confirm_password = request.POST.get("confirm_password")
+
+        if new_password != confirm_password:
+            messages.error(request, "Password Miss-Matched!!")
+            return redirect("userauths:change-password")
+        
+        if check_password(old_password, user.password):
+            user.set_password(new_password)
+            user.save()
+            messages.success(request, "Password Changed Successfully")
+            return redirect("userauths:login")
+        else:
+            messages.error(request, "Old Password is not correct")
+            return redirect("userauths:change-password")
+    return render(request, "userauths/change-password.html")
+
+def email_verification_request(request):
+    if not request.user.is_email_verified:
+        send_email_verification(request, request.user.id)
+        return HttpResponse("Email Verification link sent!")
+    return HttpResponseForbidden("Email Already Verified!")
+
+def email_verifier(request, uidb64, token):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(id=uid)
+        profile = Profile.objects.get(user=user)
+    except:
+        user = None
+        profile = None
+
+    if user == request.user:
+        if EmailVerificationTokenGenerator.check_token(user, token):
+            user.is_email_verified = True
+            profile.verified = True
+            user.save()
+            profile.save()
+            messages.success(request, "Profile Verified")
+            return HttpResponseRedirect(reverse("userauths:profile-update"))
+        return HttpResponseBadRequest("Invalid Request")
+    
+    return HttpResponseForbidden("You are not allowed to access this link")

@@ -545,3 +545,16 @@ def ajax_contact_us(request):
     }
 
     return JsonResponse({"data":data})
+
+def about_us(request):
+    return render(request, "core/about-us.html")
+
+
+def purchase_guide(request):
+    return render(request, "core/purchase-guide.html")
+
+def privacy_policy(request):
+    return render(request, "core/privacy-policy.html")
+
+def terms_of_service(request):
+    return render(request, "core/terms-of-service.html")
