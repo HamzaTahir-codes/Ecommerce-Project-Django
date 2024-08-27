@@ -102,6 +102,7 @@ class Product(models.Model):
     in_stock = models.BooleanField(default=True)
     featured = models.BooleanField(default=False)
     digital = models.BooleanField(default= False)
+    deal_of_the_day = models.BooleanField(default=False)
 
     sku = ShortUUIDField(unique=True, length =4, max_length=10, prefix="sku", alphabet="1234567890")
 

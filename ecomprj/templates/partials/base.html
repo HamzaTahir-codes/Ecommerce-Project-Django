@@ -309,7 +309,7 @@
                                                 <a href="{% url "userauths:login" %}"><i class="fi fi-rs-sign-in mr-10"></i>Login</a>
                                             </li>
                                             {% endif %}                                            
-                                            <li><a href="#">Forgot password</a></li>
+                                            <li><a href="{% url "userauths:admin_password_reset" %}">Forgot password</a></li>
                                             <li><a href="{% url "userauths:change-password" %}">Reset password</a></li>
                                             <li><a href="{% url "core:purchase-guide" %}">Purchase Guide</a></li>
                                             <li><a href="{% url "core:privacy-policy" %}">Privacy Policy</a></li>
@@ -581,7 +581,7 @@
     <!-- Template  JS -->
     <script src="{% static 'assets/js/main.js' %}"></script>
     <script src="{% static 'assets/js/shop.js' %}"></script>
-    <script src="{% static 'assets/js/functions.js' %}"></script>
+    <script src="{% static 'assets/js/function.js' %}"></script>
     <script src="{% static 'assets/js/d_function.js' %}"></script>
 </body>
 

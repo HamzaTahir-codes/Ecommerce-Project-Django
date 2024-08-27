@@ -21,8 +21,10 @@ import stripe
 
 def index(request):
     # product = Product.objects.all().order_by("-id")
-    product = Product.objects.filter(product_status = "published", featured = True)
+    product = Product.objects.filter(product_status = "published", featured = True).order_by("-id")
+    deals_of_the_day =Product.objects.filter(deal_of_the_day=True)
     context = {
+        "deals_of_the_day" : deals_of_the_day,
         "product" : product,
     }
     return render(request, 'core/index.html', context)
@@ -224,7 +226,8 @@ def cart_view(request):
     else:
         messages.warning(request,"Cart is Empty!")
         return redirect("core:index")
-    
+
+
 def delete_from_cart_view(request):
     product_id = str(request.GET.get("id"))
 
@@ -234,10 +237,8 @@ def delete_from_cart_view(request):
             del cart_data[product_id]
             request.session['cart_data_obj'] = cart_data
     
-    cart_total = 0
-    if 'cart_data_obj' in request.session:
-        for p_id, item in request.session['cart_data_obj'].items():
-            cart_total += int(item['quantity']) * float(item['price'])
+    # Calculate the cart total
+    cart_total = sum(int(item['quantity']) * float(item['price']) for item in request.session['cart_data_obj'].values())
     
     context = render_to_string("core/async/cart-list.html", {
         "cart_data": request.session['cart_data_obj'],
@@ -255,13 +256,11 @@ def update_cart_view(request):
     if "cart_data_obj" in request.session:
         if product_id in request.session['cart_data_obj']:
             cart_data = request.session['cart_data_obj']
-            cart_data[str(request.GET['id'])]['quantity'] = product_quantity
+            cart_data[product_id]['quantity'] = product_quantity
             request.session['cart_data_obj'] = cart_data
     
-    cart_total = 0
-    if 'cart_data_obj' in request.session:
-        for p_id, item in request.session['cart_data_obj'].items():
-            cart_total += int(item['quantity']) * float(item['price'])
+    # Calculate the cart total
+    cart_total = sum(int(item['quantity']) * float(item['price']) for item in request.session['cart_data_obj'].values())
     
     context = render_to_string("core/async/cart-list.html", {
         "cart_data": request.session['cart_data_obj'],
